@@ -51,7 +51,6 @@ class Course(models.Model):
     day_of_week = models.CharField(max_length=255, null=True, blank=True)
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
-    major_term = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return self.course_name or self.course_code or f"Course {self.course_id}"
@@ -101,7 +100,7 @@ class ScholarshipHistory(models.Model):
 class LostItemPost(models.Model):
     item_id = models.AutoField(primary_key=True)
     school = models.ForeignKey(School, on_delete=models.CASCADE, db_column='school_id', null=True, blank=True)
-    place = models.ForeignKey(Place, on_delete=models.CASCADE, db_column='place_id', null=True, blank=True)
+    place = models.TextField(null=True, blank=True)
     student = models.ForeignKey(Student, on_delete=models.CASCADE, db_column='student_id', null=True, blank=True)
     title = models.TextField(null=True, blank=True)
     is_anonymous = models.BooleanField(default=True)
