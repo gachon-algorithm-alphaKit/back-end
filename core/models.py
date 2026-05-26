@@ -83,7 +83,7 @@ class Scholarship(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE, db_column='school_id', null=True, blank=True)
     name = models.CharField(max_length=255, null=True, blank=True)
     dead_line = models.DateTimeField(null=True, blank=True)
-    minimum_amount = models.IntegerField(null=True, blank=True)
+    amount = models.CharField(max_length=255, null=True, blank=True)
     required_gpa = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
     required_income_bracket = models.IntegerField(null=True, blank=True)
     duplicate_allowed = models.BooleanField(null=True, blank=True)
