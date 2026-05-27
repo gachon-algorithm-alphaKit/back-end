@@ -23,13 +23,13 @@ class AuthApiTests(TestCase):
             income_bracket=5
         )
 
-    @patch('core.views.requests.post')
+    @patch('core.api.login.requests.post')
     def test_login_missing_credentials(self, mock_post):
         response = self.client.post(self.login_url, {'username': 'testuser'})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['error_code'], 'REQ_001')
 
-    @patch('core.views.requests.post')
+    @patch('core.api.login.requests.post')
     def test_login_invalid_credentials(self, mock_post):
         mock_post.return_value.text = "아이디 또는 패스워드가 잘못 입력되었습니다."
         response = self.client.post(self.login_url, {
@@ -40,7 +40,7 @@ class AuthApiTests(TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.data['error_code'], 'AUTH_001')
 
-    @patch('core.views.requests.post')
+    @patch('core.api.login.requests.post')
     def test_login_first_time_success(self, mock_post):
         mock_post.return_value.text = "강좌 전체보기"
         response = self.client.post(self.login_url, {
@@ -53,7 +53,7 @@ class AuthApiTests(TestCase):
         self.assertIsNone(response.data['data'])
         self.assertEqual(response.data['message'], '첫 로그인 입니다.')
 
-    @patch('core.views.requests.post')
+    @patch('core.api.login.requests.post')
     def test_login_existing_user_success(self, mock_post):
         mock_post.return_value.text = "강좌 전체보기"
         response = self.client.post(self.login_url, {

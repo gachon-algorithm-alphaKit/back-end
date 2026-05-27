@@ -106,7 +106,7 @@ class LostItemPost(models.Model):
     is_anonymous = models.BooleanField(default=True)
     category = models.CharField(max_length=255, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
-    img_file_path = models.ImageField(upload_to='lost_items/', null=True, blank=True)
+    lost_item_img = models.ImageField(upload_to='lost_items/', null=True, blank=True)
     create_time = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
