@@ -1,3 +1,1 @@
-from django.shortcuts import render
-
-# Create your views here.
+# 공통 로직용 빈 파일

@@ -6,7 +6,11 @@ from .models import (
 
 admin.site.register(School)
 admin.site.register(Place)
-admin.site.register(Student)
+class StudentAdmin(admin.ModelAdmin):
+    list_display = ('student_id', 'login_id', 'name', 'school')
+    readonly_fields = ('student_id',)
+
+admin.site.register(Student, StudentAdmin)
 admin.site.register(Professor)
 admin.site.register(Course)
 admin.site.register(StudentCourse)
