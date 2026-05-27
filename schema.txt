@@ -1,0 +1,6 @@
+CREATE TABLE "core_place" ("place_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "name" varchar(255) NULL, "place_type" varchar(255) NULL, "latitude" decimal NULL, "longitude" decimal NULL, "school_id" integer NULL REFERENCES "core_school" ("school_id") DEFERRABLE INITIALLY DEFERRED)
+
+CREATE TABLE "core_campusedge" ("edge_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "is_walkable" bool NOT NULL, "node1_id" integer NOT NULL REFERENCES "core_place" ("place_id") DEFERRABLE INITIALLY DEFERRED, "node2_id" integer NOT NULL REFERENCES "core_place" ("place_id") DEFERRABLE INITIALLY DEFERRED)
+
+CREATE TABLE "core_placealias" ("alias_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "alias_name" varchar(255) NOT NULL, "place_id" integer NOT NULL REFERENCES "core_place" ("place_id") DEFERRABLE INITIALLY DEFERRED)
+

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (
-    School, Place, Student, Professor, Course, StudentCourse, StudyRoom,
+    School, Place, CampusEdge, PlaceAlias, Student, Professor, Course, StudentCourse, StudyRoom,
     Reservation, Scholarship, ScholarshipHistory, LostItemPost, Comment
 )
 
@@ -20,3 +20,5 @@ admin.site.register(Scholarship)
 admin.site.register(ScholarshipHistory)
 admin.site.register(LostItemPost)
 admin.site.register(Comment)
+admin.site.register(CampusEdge)
+admin.site.register(PlaceAlias)
