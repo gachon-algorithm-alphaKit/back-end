@@ -12,3 +12,5 @@
 [WARNING] 2026-05-31 14:08:32,213 | rate_limiter | Rate limited: student_id=202434980 action=like elapsed=3.6s limit=5s
 [WARNING] 2026-05-31 14:08:40,864 | rate_limiter | Rate limited: student_id=202434980 action=like elapsed=1.0s limit=5s
 [WARNING] 2026-05-31 14:09:11,353 | rate_limiter | Rate limited: student_id=202434980 action=like elapsed=0.5s limit=5s
+[WARNING] 2026-05-31 14:10:35,594 | rate_limiter | Rate limited: student_id=202434980 action=like elapsed=0.0s limit=0s
+[WARNING] 2026-05-31 14:10:42,230 | rate_limiter | Rate limited: student_id=202434980 action=like elapsed=0.5s limit=0s
