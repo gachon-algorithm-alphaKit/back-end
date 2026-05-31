@@ -122,7 +122,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Seoul'
 
 USE_I18N = True
 
@@ -163,12 +163,44 @@ LOGGING = {
             'filename': BASE_DIR / 'alphakit_backend.log',
             'formatter': 'verbose',
         },
+        'topic_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'topic.log',
+            'formatter': 'verbose',
+        },
+        'security_file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'security.log',
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'core.api': {
             'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': True,
+        },
+        'core.scheduler': {
+            'handlers': ['console', 'topic_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'core.vote': {
+            'handlers': ['console', 'topic_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'core.topic_comment': {
+            'handlers': ['console', 'topic_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'core.security': {
+            'handlers': ['console', 'security_file'],
+            'level': 'WARNING',
+            'propagate': False,
         },
     },
 }

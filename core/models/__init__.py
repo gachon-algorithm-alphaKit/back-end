@@ -4,6 +4,7 @@ from .courses import Course, StudentCourse
 from .rooms import StudyRoom, Reservation
 from .scholarships import Scholarship, ScholarshipHistory
 from .community import LostItemPost, Comment
+from .topic import Topic, TopicVote, TopicComment, TopicCommentLike
 
 __all__ = [
     'School', 'Place', 'CampusEdge', 'PlaceAlias',
@@ -11,5 +12,6 @@ __all__ = [
     'Course', 'StudentCourse',
     'StudyRoom', 'Reservation',
     'Scholarship', 'ScholarshipHistory',
-    'LostItemPost', 'Comment'
+    'LostItemPost', 'Comment',
+    'Topic', 'TopicVote', 'TopicComment', 'TopicCommentLike'
 ]

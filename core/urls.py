@@ -8,6 +8,11 @@ from .api.scholarships import get_scholarships
 from .api.rooms import recommend_study_rooms, create_reservation, get_my_reservations, cancel_reservation
 from .api.losts import search_lost_items, handle_lost_items, get_my_lost_items, update_lost_item, suggest_lost_items
 from .api.comments import handle_comments, manage_comment
+from .api.topic_api import (
+    get_active_topic, get_topic_list, handle_vote, get_vote_stat,
+    create_topic_comment, get_topic_comments, manage_topic_comment,
+    toggle_topic_comment_like,
+)
 
 urlpatterns = [
     path('students/login', student_login, name='student_login'),
@@ -30,4 +35,13 @@ urlpatterns = [
     path('lost-items/<int:item_id>/comments/', handle_comments, name='handle_comments'),
     path('lost-items/suggestions/', suggest_lost_items, name='suggest_lost_items'),
 
+    # ── 밸런스 게임 (Topic) ──────────────────────────────────
+    path('topics/active/', get_active_topic, name='get_active_topic'),
+    path('topics/', get_topic_list, name='get_topic_list'),
+    path('topics/<int:topic_id>/vote/', handle_vote, name='handle_vote'),
+    path('topics/<int:topic_id>/vote/stat/', get_vote_stat, name='get_vote_stat'),
+    path('topics/<int:topic_id>/comments/', create_topic_comment, name='create_topic_comment'),
+    path('topics/<int:topic_id>/comments/list/', get_topic_comments, name='get_topic_comments'),
+    path('topics/comments/<int:comment_id>/', manage_topic_comment, name='manage_topic_comment'),
+    path('topics/comments/<int:comment_id>/like/', toggle_topic_comment_like, name='toggle_topic_comment_like'),
 ]

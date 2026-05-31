@@ -12,3 +12,11 @@ class CoreConfig(AppConfig):
                 print("CourseSearchEngine initialized successfully.")
             except Exception as e:
                 print(f"Failed to initialize CourseSearchEngine: {e}")
+
+            # 밸런스 게임 토픽 스케줄러 시작
+            try:
+                from core.utils.topic_scheduler import start_scheduler
+                start_scheduler()
+                print("TopicScheduler initialized successfully.")
+            except Exception as e:
+                print(f"Failed to initialize TopicScheduler: {e}")
