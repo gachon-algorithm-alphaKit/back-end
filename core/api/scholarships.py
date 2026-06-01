@@ -50,7 +50,7 @@ def evaluate_scholarship_match(student, scholarship):
 
     is_fully_matched = gpa_pass and income_pass and duplicate_pass
 
-    if not duplicate_pass:
+    if not is_fully_matched:
         return 0, False
 
     # 매칭 점수 산정 알고리즘 (0~100점)
@@ -98,8 +98,11 @@ def get_scholarships(request):
         page_num = int(request.GET.get('page', 1))
         limit = int(request.GET.get('limit', 20))
 
+        from django.db.models import Q
         # 4. 전체 장학금 쿼리셋 가져오기 (마감일이 남은 순서대로 정렬)
-        queryset = Scholarship.objects.all().order_by('dead_line')
+        queryset = Scholarship.objects.filter(
+            Q(dead_line__gte=timezone.now()) | Q(dead_line__isnull=True)
+        ).order_by('dead_line')
 
         # 5. 페이징 처리
         paginator = Paginator(queryset, limit)

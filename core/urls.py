@@ -5,8 +5,8 @@ from .api.courses import get_courses
 from .api.wishlist import wishlist_toggle, wishlist_list, wishlist_remove
 from .api.campus import get_campus_graph
 from .api.scholarships import get_scholarships
-from .api.rooms import recommend_study_rooms, create_reservation, get_my_reservations, cancel_reservation
-from .api.losts import search_lost_items, handle_lost_items, get_my_lost_items, update_lost_item, suggest_lost_items
+from .api.rooms import recommend_study_rooms, create_reservation, create_combo_reservation, get_my_reservations, cancel_reservation
+from .api.losts import search_lost_items, handle_lost_items, get_my_lost_items, update_lost_item, suggest_lost_items, claim_lost_item
 from .api.comments import handle_comments, manage_comment
 from .api.topic_api import (
     get_active_topic, get_topic_list, handle_vote, get_vote_stat,
@@ -25,6 +25,7 @@ urlpatterns = [
     path('scholarships/', get_scholarships, name='get_scholarships'),
     path('rooms/recommend/', recommend_study_rooms, name='recommend_study_rooms'),
     path('rooms/reserve/', create_reservation, name='create_reservation'),
+    path('rooms/reserve_combo/', create_combo_reservation, name='create_combo_reservation'),
     path('rooms/reservations/', get_my_reservations, name='get_my_reservations'),
     path('rooms/reservations/<int:reservation_id>/', cancel_reservation, name='cancel_reservation'),
     path('lost-items/search/', search_lost_items, name='search_lost_items'),
@@ -33,7 +34,9 @@ urlpatterns = [
     path('students/me/lost-items', get_my_lost_items, name='get_my_lost_items'),
     path('students/me/lost-items/<int:item_id>', update_lost_item, name='update_lost_item'),
     path('lost-items/<int:item_id>/comments/', handle_comments, name='handle_comments'),
+    path('comments/<int:comment_id>/', manage_comment, name='manage_comment'),
     path('lost-items/suggestions/', suggest_lost_items, name='suggest_lost_items'),
+    path('lost-items/<int:item_id>/claim/', claim_lost_item, name='claim_lost_item'),
 
     # ── 밸런스 게임 (Topic) ──────────────────────────────────
     path('topics/active/', get_active_topic, name='get_active_topic'),

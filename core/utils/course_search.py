@@ -11,6 +11,7 @@ class Trie:
         self.root = TrieNode()
 
     def insert(self, word, info):
+        word = word.lower()
         node = self.root
         for ch in word:
             if ch not in node.children:
@@ -20,6 +21,7 @@ class Trie:
         node.courses.append(info)
 
     def starts_with(self, prefix):
+        prefix = prefix.lower()
         node = self.root
         for ch in prefix:
             if ch not in node.children:
@@ -87,6 +89,8 @@ def is_choseong_only(text):
 def rabin_karp(text, pattern, base=256, mod=10**9 + 7):
     if not text or not pattern:
         return False
+    text = text.lower()
+    pattern = pattern.lower()
     n, m = len(text), len(pattern)
     if m == 0 or m > n:
         return False
@@ -180,14 +184,25 @@ class CourseSearchEngine:
         return self.hash_table.get(course_id)
 
     def search(self, query, field):
+        # query.lower() to ensure case-insensitivity consistency across checks
+        q_lower = query.lower()
         if is_choseong_only(query):
-            results = self.autocomplete_choseong(query, by=field)
-            if not results:
-                results = self.search_choseong_in_field(query, field=field)
+            prefix_results = self.autocomplete_choseong(query, by=field)
+            partial_results = self.search_choseong_in_field(query, field=field)
         else:
-            results = self.autocomplete(query, by=field)
-            if not results:
-                results = self.search_keyword_in_field(query, field=field)
+            prefix_results = self.autocomplete(query, by=field)
+            partial_results = self.search_keyword_in_field(query, field=field)
+            
+        seen = set()
+        results = []
+        for c in prefix_results:
+            if c['course_id'] not in seen:
+                seen.add(c['course_id'])
+                results.append(c)
+        for c in partial_results:
+            if c['course_id'] not in seen:
+                seen.add(c['course_id'])
+                results.append(c)
         return results
 
 # Singleton instance

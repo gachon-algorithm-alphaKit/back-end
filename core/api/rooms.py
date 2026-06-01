@@ -30,7 +30,7 @@ def recommend_study_rooms(request):
             from rest_framework_simplejwt.tokens import AccessToken
             try:
                 token = AccessToken(auth_header.split(' ')[1])
-                current_student_id = token['student_id']
+                current_student_id = int(token['student_id'])
             except Exception:
                 pass
 
@@ -142,6 +142,78 @@ def recommend_study_rooms(request):
         end_idx = start_idx + limit
         paginated_recommendations = recommendations[start_idx:end_idx]
 
+        if not any(r["is_available"] for r in recommendations):
+            duration_hours = int((end_time - start_time).total_seconds() // 3600)
+            if duration_hours >= 2:
+                combo_slots = []
+                can_form_combo = True
+                
+                for h in range(duration_hours):
+                    slot_start = start_time + timezone.timedelta(hours=h)
+                    slot_end = start_time + timezone.timedelta(hours=h+1)
+                    
+                    best_room_for_slot = None
+                    best_score = -1
+                    
+                    for room in all_rooms:
+                        is_avail = True
+                        for res in daily_reservations:
+                            if res.room_id == room.room_id:
+                                if res.start_time < slot_end and res.end_time > slot_start:
+                                    is_avail = False
+                                    break
+                                    
+                        if is_avail:
+                            facilities_list = [f.strip() for f in room.facilities.split(',')] if room.facilities else []
+                            matched = list(requested_facilities.intersection(set(facilities_list)))
+                            facility_score = len(matched) * 25 
+                            wasted_space = room.capacity - head_count
+                            capacity_score = max(100 - (wasted_space * 10), 0)
+                            score = capacity_score + facility_score
+                            
+                            if score > best_score:
+                                best_score = score
+                                best_room_for_slot = {
+                                    "room_id": room.room_id,
+                                    "name": room.name,
+                                    "capacity": room.capacity,
+                                    "score": score,
+                                    "matched_facilities": matched,
+                                    "place_id": room.place_id,
+                                    "place_name": room.place.name if room.place else "위치 미정",
+                                    "facilities": facilities_list,
+                                    "start_time": slot_start.isoformat(),
+                                    "end_time": slot_end.isoformat(),
+                                    "start_hour": slot_start.astimezone(current_tz).hour,
+                                    "end_hour": slot_end.astimezone(current_tz).hour
+                                }
+                                
+                    if best_room_for_slot:
+                        combo_slots.append(best_room_for_slot)
+                    else:
+                        can_form_combo = False
+                        break
+                        
+                if can_form_combo:
+                    combo_recommendation = {
+                        "combo_id": "combo_1",
+                        "slots": combo_slots,
+                        "total_score": sum(slot["score"] for slot in combo_slots) / duration_hours
+                    }
+                    
+                    return JsonResponse({
+                        "status": "success",
+                        "data": {
+                            "match_type": "COMBINED",
+                            "recommendations": [combo_recommendation],
+                            "pagination": {
+                                "current_page": 1,
+                                "total_pages": 1,
+                                "total_items": 1
+                            }
+                        }
+                    }, json_dumps_params={'ensure_ascii': False}, status=200)
+
         return JsonResponse({
             "status": "success",
             "data": {
@@ -178,7 +250,7 @@ def create_reservation(request):
         token_str = auth_header.split(' ')[1]
         try:
             token = AccessToken(token_str)
-            student_id = token['student_id']
+            student_id = int(token['student_id'])
             current_student = Student.objects.get(student_id=student_id)
             current_student_id = current_student.student_id
         except (TokenError, InvalidToken):
@@ -207,14 +279,28 @@ def create_reservation(request):
             start_time = timezone.make_aware(start_time, current_tz)
             end_time = timezone.make_aware(end_time, current_tz)
 
+        # 7일 제한
+        now = timezone.now()
+        max_date = now + timezone.timedelta(days=7)
+        if start_time > max_date:
+            return JsonResponse({"status": "error", "message": "최대 일주일 뒤까지만 예약할 수 있습니다."}, status=400)
+
         with transaction.atomic():
-            # Overlap check
+            # Room overlap check
             if Reservation.objects.filter(
                 room_id=room_id,
                 start_time__lt=end_time,
                 end_time__gt=start_time
             ).exists():
                 return JsonResponse({"status": "error", "message": "선택한 시간대에 이미 예약이 존재합니다."}, status=400)
+            
+            # User overlap check
+            if Reservation.objects.filter(
+                student_id=current_student_id,
+                start_time__lt=end_time,
+                end_time__gt=start_time
+            ).exists():
+                return JsonResponse({"status": "error", "message": "해당 시간대에 이미 다른 스터디룸 예약이 존재합니다."}, status=400)
             
             new_reservation = Reservation.objects.create(
                 student_id=current_student_id,
@@ -239,6 +325,89 @@ def create_reservation(request):
         return JsonResponse({"status": "error", "message": f"서버 내부 오류: {str(e)}"}, status=500)
 
 @csrf_exempt
+def create_combo_reservation(request):
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "POST 메서드만 허용됩니다."}, status=405)
+
+    try:
+        from rest_framework_simplejwt.tokens import AccessToken
+        from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
+        from core.models.users import Student
+        
+        auth_header = request.headers.get('Authorization', '')
+        if not auth_header.startswith('Bearer '):
+            return JsonResponse({"status": "error", "message": "인증 토큰이 제공되지 않았습니다."}, status=401)
+            
+        token_str = auth_header.split(' ')[1]
+        try:
+            token = AccessToken(token_str)
+            student_id = int(token['student_id'])
+            current_student = Student.objects.get(student_id=student_id)
+            current_student_id = current_student.student_id
+        except (TokenError, InvalidToken):
+            return JsonResponse({"status": "error", "message": "유효하지 않은 토큰입니다."}, status=401)
+        except Student.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "학생 정보를 찾을 수 없습니다."}, status=404)
+
+        body = json.loads(request.body)
+        slots = body.get("slots", [])
+        head_count = body.get("head_count", 1)
+
+        if not slots:
+            return JsonResponse({"status": "error", "message": "slots 데이터가 필요합니다."}, status=400)
+
+        current_tz = timezone.get_current_timezone()
+        now = timezone.now()
+        max_date = now + timezone.timedelta(days=7)
+
+        with transaction.atomic():
+            new_reservations = []
+            for slot in slots:
+                room_id = slot.get("room_id")
+                start_time_str = slot.get("start_time")
+                end_time_str = slot.get("end_time")
+
+                if not all([room_id, start_time_str, end_time_str]):
+                    raise ValueError("room_id, start_time, end_time은 필수 항목입니다.")
+
+                start_time = timezone.make_aware(datetime.fromisoformat(start_time_str), current_tz) if timezone.is_naive(datetime.fromisoformat(start_time_str)) else datetime.fromisoformat(start_time_str)
+                end_time = timezone.make_aware(datetime.fromisoformat(end_time_str), current_tz) if timezone.is_naive(datetime.fromisoformat(end_time_str)) else datetime.fromisoformat(end_time_str)
+
+                if start_time > max_date:
+                    raise ValueError("최대 일주일 뒤까지만 예약할 수 있습니다.")
+
+                if Reservation.objects.filter(room_id=room_id, start_time__lt=end_time, end_time__gt=start_time).exists():
+                    raise ValueError(f"방 {room_id}의 선택한 시간대에 이미 예약이 존재합니다.")
+                
+                if Reservation.objects.filter(student_id=current_student_id, start_time__lt=end_time, end_time__gt=start_time).exists():
+                    raise ValueError(f"해당 시간대에 이미 다른 스터디룸 예약이 존재합니다.")
+                
+                res = Reservation.objects.create(
+                    student_id=current_student_id,
+                    room_id=room_id,
+                    start_time=start_time,
+                    end_time=end_time,
+                    head_count=head_count,
+                    status="CONFIRMED"
+                )
+                new_reservations.append(res)
+
+        return JsonResponse({
+            "status": "success",
+            "message": "공실 조합 예약이 성공적으로 확정되었습니다.",
+            "data": {
+                "reservation_ids": [r.reservation_id for r in new_reservations],
+            }
+        }, json_dumps_params={'ensure_ascii': False}, status=200)
+
+    except ValueError as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=400)
+    except json.JSONDecodeError:
+        return JsonResponse({"status": "error", "message": "올바르지 않은 JSON 형식입니다."}, status=400)
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": f"서버 내부 오류: {str(e)}"}, status=500)
+
+@csrf_exempt
 def get_my_reservations(request):
     if request.method != "GET":
         return JsonResponse({"status": "error", "message": "GET 메서드만 허용됩니다."}, status=405)
@@ -254,7 +423,7 @@ def get_my_reservations(request):
         token_str = auth_header.split(' ')[1]
         try:
             token = AccessToken(token_str)
-            student_id = token['student_id']
+            student_id = int(token['student_id'])
         except (TokenError, InvalidToken):
             return JsonResponse({"status": "error", "message": "유효하지 않은 토큰입니다."}, status=401)
 
@@ -307,7 +476,7 @@ def cancel_reservation(request, reservation_id):
         token_str = auth_header.split(' ')[1]
         try:
             token = AccessToken(token_str)
-            student_id = token['student_id']
+            student_id = int(token['student_id'])
         except (TokenError, InvalidToken):
             return JsonResponse({"status": "error", "message": "유효하지 않은 토큰입니다."}, status=401)
             

@@ -11,8 +11,8 @@ def get_student_id_from_token(request):
         return None
     try:
         token = AccessToken(auth_header.split(' ')[1])
-        return token['student_id']
-    except (TokenError, InvalidToken):
+        return int(token['student_id'])
+    except (TokenError, InvalidToken, ValueError, TypeError):
         return None
 
 
@@ -27,8 +27,8 @@ def format_comment(comment, current_student_id, post_owner_id):
     return {
         "comment_id": comment.comment_id,
         "writer": writer,
-        "is_writer": comment.student_id == current_student_id,
-        "is_post_owner": comment.student_id == post_owner_id,
+        "is_writer": bool(current_student_id and comment.student_id and int(comment.student_id) == int(current_student_id)),
+        "is_post_owner": bool(post_owner_id and comment.student_id and int(comment.student_id) == int(post_owner_id)),
         "comment": comment.comment,
         "is_anonymous": comment.is_anonymous,
         "create_time": comment.create_time.isoformat() if comment.create_time else "",

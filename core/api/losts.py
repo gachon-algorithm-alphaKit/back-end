@@ -15,8 +15,8 @@ def get_student_id_from_token(request):
         return None
     try:
         token = AccessToken(auth_header.split(' ')[1])
-        return token['student_id']
-    except (TokenError, InvalidToken):
+        return int(token['student_id'])
+    except (TokenError, InvalidToken, ValueError, TypeError):
         return None
 
 # 1. KMP 알고리즘 (O(N+M) 완전 일치 탐색) - 대소문자 무시를 위해 외부에서 lower() 적용
@@ -250,7 +250,7 @@ def format_item_dict(item, current_student_id=None, match_score=None):
         "status": item.status,
         "lost_item_img": item.lost_item_img.url if item.lost_item_img else "",
         "create_time": item.create_time.isoformat() if item.create_time else "",
-        "is_mine": item.student_id == current_student_id if current_student_id else False,
+        "is_mine": bool(current_student_id and item.student_id and int(item.student_id) == int(current_student_id)),
     }
     if match_score:
         data["match_score"] = match_score
@@ -437,3 +437,23 @@ def update_lost_item(request, item_id):
             return JsonResponse({"status": "error", "message": f"서버 내부 오류: {str(e)}"}, status=500)
             
     return JsonResponse({"status": "error", "message": "허용되지 않는 메서드입니다."}, status=405)
+
+@csrf_exempt
+def claim_lost_item(request, item_id):
+    if request.method == "POST":
+        try:
+            student_id = get_student_id_from_token(request)
+            if not student_id:
+                return JsonResponse({"status": "error", "message": "유효하지 않은 인증 토큰입니다."}, status=401)
+                
+            try:
+                item = LostItemPost.objects.get(item_id=item_id)
+            except LostItemPost.DoesNotExist:
+                return JsonResponse({"status": "error", "message": "게시글을 찾을 수 없습니다."}, status=404)
+                
+            item.status = True
+            item.save()
+            return JsonResponse({"status": "success", "message": "수령 신청이 완료되었습니다."}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": f"서버 내부 오류: {str(e)}"}, status=500)
+    return JsonResponse({"status": "error", "message": "POST 메서드만 허용됩니다."}, status=405)
