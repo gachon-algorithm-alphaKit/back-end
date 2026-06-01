@@ -239,6 +239,13 @@ def suggest_lost_items(request):
     except Exception as e:
         return JsonResponse({"status": "error", "message": f"서버 내부 오류: {str(e)}"}, status=500)
 def format_item_dict(item, current_student_id=None, match_score=None):
+    img_url = ""
+    if item.lost_item_img:
+        if item.lost_item_img.name.startswith("http"):
+            img_url = item.lost_item_img.name
+        else:
+            img_url = item.lost_item_img.url
+
     data = {
         "item_id": item.item_id,
         "school_id": item.school_id,
@@ -248,7 +255,7 @@ def format_item_dict(item, current_student_id=None, match_score=None):
         "category": item.category,
         "description": item.description,
         "status": item.status,
-        "lost_item_img": item.lost_item_img.url if item.lost_item_img else "",
+        "lost_item_img": img_url,
         "create_time": item.create_time.isoformat() if item.create_time else "",
         "is_mine": bool(current_student_id and item.student_id and int(item.student_id) == int(current_student_id)),
     }

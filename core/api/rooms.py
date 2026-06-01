@@ -95,9 +95,13 @@ def recommend_study_rooms(request):
 
         recommendations = []
 
+        # Check if the user has ANY overlapping reservation
+        user_has_overlap = len(my_overlapping_room_ids) > 0
+
         # 3. 필터링된 방에 대한 Scoring 계산
         for room in all_rooms:
-            is_available = room.room_id not in overlapping_room_ids
+            room_is_booked = room.room_id in overlapping_room_ids
+            is_available = (not room_is_booked) and (not user_has_overlap)
             is_my_reservation = room.room_id in my_overlapping_room_ids
             booked_slots = room_bookings.get(room.room_id, [False] * 14)
             # 시설 문자열을 리스트로 파싱 (예: "TV,화이트보드" -> ["TV", "화이트보드"])
@@ -158,8 +162,8 @@ def recommend_study_rooms(request):
                     for room in all_rooms:
                         is_avail = True
                         for res in daily_reservations:
-                            if res.room_id == room.room_id:
-                                if res.start_time < slot_end and res.end_time > slot_start:
+                            if res.start_time < slot_end and res.end_time > slot_start:
+                                if res.room_id == room.room_id or (current_student_id and res.student_id == current_student_id):
                                     is_avail = False
                                     break
                                     

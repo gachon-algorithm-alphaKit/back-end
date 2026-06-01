@@ -35,6 +35,13 @@ def calculate_d_day(deadline):
 
 def evaluate_scholarship_match(student, scholarship):
     """학생의 스펙과 장학금 조건을 비교하여 매칭률과 적합 여부를 판별합니다."""
+    duplicate_pass = True
+    if student.get('awarded_last_semester', False) and not scholarship.duplicate_allowed:
+        duplicate_pass = False
+
+    if not duplicate_pass:
+        return 0, False
+
     gpa_pass = True
     if scholarship.required_gpa is not None:
         gpa_pass = student['gpa'] >= float(scholarship.required_gpa)
@@ -42,22 +49,14 @@ def evaluate_scholarship_match(student, scholarship):
     income_pass = True
     if scholarship.required_income_bracket is not None:
         # 소득분위 조건은 통상적으로 'n분위 이하'를 의미함
-        income_pass = student['income_bracket'] >= scholarship.required_income_bracket
+        income_pass = student['income_bracket'] <= scholarship.required_income_bracket
 
-    duplicate_pass = True
-    if student.get('awarded_last_semester', False) and not scholarship.duplicate_allowed:
-        duplicate_pass = False
-
-    is_fully_matched = gpa_pass and income_pass and duplicate_pass
-
-    if not is_fully_matched:
-        return 0, False
+    is_fully_matched = gpa_pass and income_pass
 
     # 매칭 점수 산정 알고리즘 (0~100점)
-    score = 40  # 기본 점수
+    score = 50  # 기본 점수
     if gpa_pass: score += 20
     if income_pass: score += 20
-    if duplicate_pass: score += 10
     if is_fully_matched: score += 10
 
     return min(score, 100), is_fully_matched
