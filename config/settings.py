@@ -65,6 +65,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'core.middleware.api_logging.APILoggingMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -150,56 +151,64 @@ LOGGING = {
             'format': '[{levelname}] {message}',
             'style': '{',
         },
+        'json': {
+            '()': 'core.utils.log_formatters.JsonFormatter',
+        },
+        'terminal': {
+            '()': 'core.utils.log_formatters.TerminalFormatter',
+        },
     },
     'handlers': {
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'simple',
+            'formatter': 'terminal',
         },
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'alphakit_backend.log',
-            'formatter': 'verbose',
+        'info_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': BASE_DIR / 'log' / 'info' / 'info.log',
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 30,
+            'formatter': 'json',
+            'encoding': 'utf-8',
         },
-        'topic_file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'topic.log',
-            'formatter': 'verbose',
-        },
-        'security_file': {
+        'warn_file': {
             'level': 'WARNING',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'security.log',
-            'formatter': 'verbose',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': BASE_DIR / 'log' / 'warn' / 'warn.log',
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 30,
+            'formatter': 'json',
+            'encoding': 'utf-8',
+        },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': BASE_DIR / 'log' / 'error' / 'error.log',
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 30,
+            'formatter': 'json',
+            'encoding': 'utf-8',
         },
     },
     'loggers': {
-        'core.api': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+        'django': {
+            'handlers': ['console', 'info_file', 'warn_file', 'error_file'],
+            'level': 'INFO',
             'propagate': True,
         },
-        'core.scheduler': {
-            'handlers': ['console', 'topic_file'],
+        'core.api': {
+            'handlers': ['console', 'info_file', 'warn_file', 'error_file'],
             'level': 'INFO',
             'propagate': False,
         },
-        'core.vote': {
-            'handlers': ['console', 'topic_file'],
+        'core.tasks': {
+            'handlers': ['console', 'info_file', 'warn_file', 'error_file'],
             'level': 'INFO',
-            'propagate': False,
-        },
-        'core.topic_comment': {
-            'handlers': ['console', 'topic_file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'core.security': {
-            'handlers': ['console', 'security_file'],
-            'level': 'WARNING',
             'propagate': False,
         },
     },

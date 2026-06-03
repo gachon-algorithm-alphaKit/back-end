@@ -33,3 +33,17 @@
 [INFO] 2026-06-02 02:17:47,435 | topic_scheduler | rotate_topic started: today=2026-06-02
 [INFO] 2026-06-02 02:17:47,451 | topic_scheduler | Deactivated 1 topic(s)
 [INFO] 2026-06-02 02:17:47,456 | topic_scheduler | Activated 1 topic(s) for 2026-06-02
+[INFO] 2026-06-03 23:12:13,677 | topic_scheduler | Topic rotation scheduler started (daily 00:00 KST)
+[INFO] 2026-06-03 23:12:13,678 | topic_scheduler | rotate_topic started: today=2026-06-03
+[INFO] 2026-06-03 23:12:14,192 | topic_scheduler | Deactivated 1 topic(s)
+[INFO] 2026-06-03 23:12:14,281 | topic_scheduler | Activated 1 topic(s) for 2026-06-03
+[INFO] 2026-06-03 23:12:15,284 | topic_scheduler | Topic rotation scheduler started (daily 00:00 KST)
+[INFO] 2026-06-03 23:12:15,284 | topic_scheduler | rotate_topic started: today=2026-06-03
+[INFO] 2026-06-03 23:12:15,372 | topic_scheduler | Deactivated 1 topic(s)
+[INFO] 2026-06-03 23:12:15,455 | topic_scheduler | Activated 1 topic(s) for 2026-06-03
+[INFO] 2026-06-04 00:00:00,005 | topic_scheduler | rotate_topic started: today=2026-06-04
+[INFO] 2026-06-04 00:00:00,021 | topic_scheduler | rotate_topic started: today=2026-06-04
+[INFO] 2026-06-04 00:00:00,465 | topic_scheduler | Deactivated 1 topic(s)
+[INFO] 2026-06-04 00:00:00,794 | topic_scheduler | Activated 1 topic(s) for 2026-06-04
+[INFO] 2026-06-04 00:00:01,138 | topic_scheduler | Deactivated 1 topic(s)
+[INFO] 2026-06-04 00:00:01,397 | topic_scheduler | Activated 1 topic(s) for 2026-06-04
