@@ -520,6 +520,7 @@ def get_topic_comments(request, topic_id):
         qs = TopicComment.objects.filter(
             topic_id=topic_id, select_opinion=opinion_bool
         )
+        total_count = qs.count()
 
         if sort == 'like':
             # 좋아요순: -like_count, -comment_id
@@ -585,6 +586,7 @@ def get_topic_comments(request, topic_id):
                     'comments': comments_data,
                     'next_cursor': next_cursor,
                     'has_more': has_more,
+                    'total_count': total_count,
                 },
             },
             json_dumps_params={'ensure_ascii': False},

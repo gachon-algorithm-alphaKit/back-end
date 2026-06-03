@@ -5,10 +5,8 @@ import json
 from django.urls import resolve
 from django.utils.deprecation import MiddlewareMixin
 from core.utils.task_logger import correlation_id_var
-
 # Separate loggers for file and console
 api_logger = logging.getLogger('core.api')
-
 class APILoggingMiddleware(MiddlewareMixin):
     def process_request(self, request):
         request.start_time = time.time()
@@ -19,7 +17,6 @@ class APILoggingMiddleware(MiddlewareMixin):
         
         # Set correlation ID for async tasks spawned from this request
         correlation_id_var.set(request_id)
-
         try:
             resolver_match = resolve(request.path)
             view_name = resolver_match.view_name
@@ -32,7 +29,6 @@ class APILoggingMiddleware(MiddlewareMixin):
             api_id = "unknown"
             
         request.api_id = api_id
-
         # Extract body (careful with multipart/form-data)
         body = {}
         if request.content_type == 'application/json':
@@ -47,9 +43,7 @@ class APILoggingMiddleware(MiddlewareMixin):
             
         # Add a custom attribute to track request body safely for response logging
         request._logged_body = body
-
         user_id = getattr(request.user, 'id', None) if hasattr(request, 'user') else None
-
         extra_logs = {
             'is_api': True,
             'log_type': 'REQUEST',
@@ -61,15 +55,12 @@ class APILoggingMiddleware(MiddlewareMixin):
             'url': request.get_full_path(),
             'body': body
         }
-
         api_logger.info(f"API Request Started: {request.method} {request.path}", extra=extra_logs)
         
         return None
-
     def process_response(self, request, response):
         if not hasattr(request, 'start_time'):
             return response
-
         duration = round((time.time() - request.start_time) * 1000, 2)
         request_id = getattr(request, 'request_id', 'unknown')
         api_id = getattr(request, 'api_id', 'unknown')
@@ -99,7 +90,6 @@ class APILoggingMiddleware(MiddlewareMixin):
             'duration': duration,
             'response_data': response_data
         }
-
         if status_code >= 400:
             extra_logs['cause'] = response.reason_phrase
             extra_logs['request_data'] = getattr(request, '_logged_body', {})
@@ -110,9 +100,7 @@ class APILoggingMiddleware(MiddlewareMixin):
                 api_logger.warning(f"API Client Error Response: {status_code}", extra=extra_logs)
         else:
             api_logger.info(f"API Response Completed: {status_code}", extra=extra_logs)
-
         return response
-
     def process_exception(self, request, exception):
         if not hasattr(request, 'start_time'):
             return None
@@ -140,3 +128,4 @@ class APILoggingMiddleware(MiddlewareMixin):
         
         api_logger.error(f"API Exception: {str(exception)}", exc_info=True, extra=extra_logs)
         return None
+

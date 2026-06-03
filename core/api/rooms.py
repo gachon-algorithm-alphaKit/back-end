@@ -149,15 +149,12 @@ def recommend_study_rooms(request):
         if not any(r["is_available"] for r in recommendations):
             duration_hours = int((end_time - start_time).total_seconds() // 3600)
             if duration_hours >= 2:
-                combo_slots = []
-                can_form_combo = True
-                
+                # 1. 각 시간대(slot)별 사용 가능한 방 목록 사전 계산
+                slot_valid_rooms = []
                 for h in range(duration_hours):
                     slot_start = start_time + timezone.timedelta(hours=h)
                     slot_end = start_time + timezone.timedelta(hours=h+1)
-                    
-                    best_room_for_slot = None
-                    best_score = -1
+                    valid_for_h = []
                     
                     for room in all_rooms:
                         is_avail = True
@@ -175,45 +172,70 @@ def recommend_study_rooms(request):
                             capacity_score = max(100 - (wasted_space * 10), 0)
                             score = capacity_score + facility_score
                             
-                            if score > best_score:
-                                best_score = score
-                                best_room_for_slot = {
-                                    "room_id": room.room_id,
-                                    "name": room.name,
-                                    "capacity": room.capacity,
-                                    "score": score,
-                                    "matched_facilities": matched,
-                                    "place_id": room.place_id,
-                                    "place_name": room.place.name if room.place else "위치 미정",
-                                    "facilities": facilities_list,
-                                    "start_time": slot_start.isoformat(),
-                                    "end_time": slot_end.isoformat(),
-                                    "start_hour": slot_start.astimezone(current_tz).hour,
-                                    "end_hour": slot_end.astimezone(current_tz).hour
-                                }
-                                
-                    if best_room_for_slot:
-                        combo_slots.append(best_room_for_slot)
-                    else:
-                        can_form_combo = False
-                        break
-                        
-                if can_form_combo:
-                    combo_recommendation = {
-                        "combo_id": "combo_1",
-                        "slots": combo_slots,
-                        "total_score": sum(slot["score"] for slot in combo_slots) / duration_hours
-                    }
+                            valid_for_h.append({
+                                "room_id": room.room_id,
+                                "name": room.name,
+                                "capacity": room.capacity,
+                                "score": score,
+                                "matched_facilities": matched,
+                                "place_id": room.place_id,
+                                "place_name": room.place.name if room.place else "위치 미정",
+                                "facilities": facilities_list,
+                                "start_time": slot_start.isoformat(),
+                                "end_time": slot_end.isoformat(),
+                                "start_hour": slot_start.astimezone(current_tz).hour,
+                                "end_hour": slot_end.astimezone(current_tz).hour
+                            })
+                            
+                    # 탐색 공간 축소를 위해 해당 슬롯에서 점수가 높은 방 상위 5개만 후보로 사용
+                    valid_for_h.sort(key=lambda x: x["score"], reverse=True)
+                    slot_valid_rooms.append(valid_for_h[:5])
                     
+                # 2. 백트래킹(DFS)으로 최적의 조합 찾기
+                best_combos = []
+                
+                def backtrack(hour_idx, current_combo, current_raw_score, room_changes):
+                    if hour_idx == duration_hours:
+                        # 방 이동 패널티: 1회 변경당 -50점
+                        penalty = room_changes * 50
+                        final_score = current_raw_score - penalty
+                        best_combos.append({
+                            "slots": list(current_combo),
+                            "total_score": final_score / duration_hours,
+                            "raw_score": final_score
+                        })
+                        return
+                        
+                    for room_data in slot_valid_rooms[hour_idx]:
+                        is_change = 0
+                        if current_combo and current_combo[-1]["room_id"] != room_data["room_id"]:
+                            is_change = 1
+                            
+                        current_combo.append(room_data)
+                        backtrack(hour_idx + 1, current_combo, current_raw_score + room_data["score"], room_changes + is_change)
+                        current_combo.pop()
+                        
+                # 모든 시간대에 최소 1개 이상의 사용 가능한 방이 있어야 조합 가능
+                if all(len(rooms) > 0 for rooms in slot_valid_rooms):
+                    backtrack(0, [], 0, 0)
+                    
+                    # 최종 점수(패널티 적용) 기준으로 내림차순 정렬 후 상위 3개 추출
+                    best_combos.sort(key=lambda x: x["raw_score"], reverse=True)
+                    top_3_combos = best_combos[:3]
+                    
+                    for i, combo in enumerate(top_3_combos):
+                        combo["combo_id"] = f"combo_{i+1}"
+                        del combo["raw_score"]
+                        
                     return JsonResponse({
                         "status": "success",
                         "data": {
                             "match_type": "COMBINED",
-                            "recommendations": [combo_recommendation],
+                            "recommendations": top_3_combos,
                             "pagination": {
                                 "current_page": 1,
                                 "total_pages": 1,
-                                "total_items": 1
+                                "total_items": len(top_3_combos)
                             }
                         }
                     }, json_dumps_params={'ensure_ascii': False}, status=200)

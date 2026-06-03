@@ -48,18 +48,18 @@ def evaluate_scholarship_match(student, scholarship):
 
     income_pass = True
     if scholarship.required_income_bracket is not None:
-        # 소득분위 조건은 통상적으로 'n분위 이하'를 의미함
+        # 소득분위 조건은 통상적으로 'n분위 이하'를 뜻함
         income_pass = student['income_bracket'] <= scholarship.required_income_bracket
 
     is_fully_matched = gpa_pass and income_pass
 
-    # 매칭 점수 산정 알고리즘 (0~100점)
-    score = 50  # 기본 점수
+    # 매칭 점수 산정 알고리즘
+    score = 50
     if gpa_pass: score += 20
-    if income_pass: score += 20
+    if income_pass: score += 10
     if is_fully_matched: score += 10
 
-    return min(score, 100), is_fully_matched
+    return max(0, min(score, 100)), is_fully_matched
 
 # ---------------------------------------------------------------------------
 # 🌐 [API] 학생 맞춤형 장학제도 목록 조회 엔드포인트
