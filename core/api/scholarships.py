@@ -48,15 +48,14 @@ def evaluate_scholarship_match(student, scholarship):
 
     income_pass = True
     if scholarship.required_income_bracket is not None:
-        # 소득분위 조건은 통상적으로 'n분위 이하'를 뜻함
-        income_pass = student['income_bracket'] <= scholarship.required_income_bracket
+        income_pass = student['income_bracket'] >= scholarship.required_income_bracket
 
     is_fully_matched = gpa_pass and income_pass
 
     # 매칭 점수 산정 알고리즘
     score = 50
     if gpa_pass: score += 20
-    if income_pass: score += 10
+    if income_pass: score += 20
     if is_fully_matched: score += 10
 
     return max(0, min(score, 100)), is_fully_matched
@@ -134,8 +133,8 @@ def get_scholarships(request):
                 }
             })
 
-        # 매칭 점수가 높은 순으로 한 번 더 정렬 (추천의 퀄리티 향상)
-        response_data.sort(key=lambda x: x['recommendation_info']['match_score'], reverse=True)
+        # 매칭 점수가 높은 순(내림차순), 금액이 높은 순(내림차순)으로 2차 정렬
+        response_data.sort(key=lambda x: (x['recommendation_info']['match_score'], x['minimum_amount']), reverse=True)
 
         # 7. 명세서 규격에 맞춘 성공 응답 반환
         return JsonResponse({

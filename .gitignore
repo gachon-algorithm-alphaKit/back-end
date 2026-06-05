@@ -1,4 +1,5 @@
 alphakit_backend.log
 logs/
 log/
+!log/error/error.log
 !ui_error.log

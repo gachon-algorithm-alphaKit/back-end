@@ -42,18 +42,11 @@ def recommend_study_rooms(request):
         except (ValueError, TypeError):
             return JsonResponse({"status": "error", "message": "잘못된 시간 형식입니다."}, status=400)
 
-        current_tz = timezone.get_current_timezone()
         if timezone.is_naive(start_time):
             # KST라고 가정하고 Aware로 변환한 뒤 처리 (프론트에서 넘어온 시간이 Naive인 경우)
+            current_tz = timezone.get_current_timezone()
             start_time = timezone.make_aware(start_time, current_tz)
             end_time = timezone.make_aware(end_time, current_tz)
-
-        start_local = start_time.astimezone(current_tz)
-        end_local = end_time.astimezone(current_tz)
-        if start_local >= end_local:
-            return JsonResponse({"status": "error", "message": "종료 시간은 시작 시간보다 늦어야 합니다."}, status=400)
-        if start_local.hour < 8 or end_local.hour > 22 or (end_local.hour == 22 and end_local.minute > 0):
-            return JsonResponse({"status": "error", "message": "예약은 08:00부터 22:00 사이에서만 가능합니다."}, status=400)
 
         # 1. 겹치는 예약이 있는 방 ID 찾기 및 14시간 슬롯 생성
         target_date = start_time.date()
@@ -155,7 +148,7 @@ def recommend_study_rooms(request):
 
         if not any(r["is_available"] for r in recommendations):
             duration_hours = int((end_time - start_time).total_seconds() // 3600)
-            if 2 <= duration_hours <= 4:
+            if duration_hours >= 2:
                 # 1. 각 시간대(slot)별 사용 가능한 방 목록 사전 계산
                 slot_valid_rooms = []
                 for h in range(duration_hours):
@@ -312,13 +305,6 @@ def create_reservation(request):
             start_time = timezone.make_aware(start_time, current_tz)
             end_time = timezone.make_aware(end_time, current_tz)
 
-        start_local = start_time.astimezone(current_tz)
-        end_local = end_time.astimezone(current_tz)
-        if start_local >= end_local:
-            return JsonResponse({"status": "error", "message": "종료 시간은 시작 시간보다 늦어야 합니다."}, status=400)
-        if start_local.hour < 8 or end_local.hour > 22 or (end_local.hour == 22 and end_local.minute > 0):
-            return JsonResponse({"status": "error", "message": "예약은 08:00부터 22:00 사이에서만 가능합니다."}, status=400)
-
         # 7일 제한
         now = timezone.now()
         max_date = now + timezone.timedelta(days=7)
@@ -412,13 +398,6 @@ def create_combo_reservation(request):
 
                 start_time = timezone.make_aware(datetime.fromisoformat(start_time_str), current_tz) if timezone.is_naive(datetime.fromisoformat(start_time_str)) else datetime.fromisoformat(start_time_str)
                 end_time = timezone.make_aware(datetime.fromisoformat(end_time_str), current_tz) if timezone.is_naive(datetime.fromisoformat(end_time_str)) else datetime.fromisoformat(end_time_str)
-
-                start_local = start_time.astimezone(current_tz)
-                end_local = end_time.astimezone(current_tz)
-                if start_local >= end_local:
-                    raise ValueError("종료 시간은 시작 시간보다 늦어야 합니다.")
-                if start_local.hour < 8 or end_local.hour > 22 or (end_local.hour == 22 and end_local.minute > 0):
-                    raise ValueError("예약은 08:00부터 22:00 사이에서만 가능합니다.")
 
                 if start_time > max_date:
                     raise ValueError("최대 일주일 뒤까지만 예약할 수 있습니다.")
