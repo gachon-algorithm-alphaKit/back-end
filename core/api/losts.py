@@ -246,10 +246,23 @@ def format_item_dict(item, current_student_id=None, match_score=None):
         else:
             img_url = item.lost_item_img.url
 
+    author_name = "알 수 없음"
+    author_dept = "소속 없음"
+    author_profile_img = ""
+
+    if item.student:
+        author_name = item.student.name or "알 수 없음"
+        author_dept = item.student.major or "소속 없음"
+        if item.student.profile_img:
+            if item.student.profile_img.name.startswith("http"):
+                author_profile_img = item.student.profile_img.name
+            else:
+                author_profile_img = item.student.profile_img.url
+
     data = {
         "item_id": item.item_id,
-        "school_id": item.school_id,
-        "student_id": item.student_id,
+        "school_id": item.school_id_id if hasattr(item, 'school_id_id') else item.school_id,
+        "student_id": item.student_id_id if hasattr(item, 'student_id_id') else item.student_id,
         "title": item.title,
         "is_anonymous": item.is_anonymous,
         "category": item.category,
@@ -258,6 +271,9 @@ def format_item_dict(item, current_student_id=None, match_score=None):
         "lost_item_img": img_url,
         "create_time": item.create_time.isoformat() if item.create_time else "",
         "is_mine": bool(current_student_id and item.student_id and int(item.student_id) == int(current_student_id)),
+        "author_name": author_name,
+        "author_dept": author_dept,
+        "author_profile_img": author_profile_img,
     }
     if match_score:
         data["match_score"] = match_score

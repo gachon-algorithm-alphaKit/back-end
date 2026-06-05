@@ -460,7 +460,7 @@ def create_topic_comment(request, topic_id):
                 'status': 'success',
                 'data': {
                     'comment_id': new_comment.comment_id,
-                    'writer': f'학생{anon_num}',
+                    'writer': f'학생{anon_num} (나)',
                     'is_writer': True,
                     'comment': new_comment.comment,
                     'select_opinion': new_comment.select_opinion,

@@ -1,4 +1,5 @@
 import json
+import uuid
 from datetime import datetime
 from django.utils import timezone
 from django.http import JsonResponse
@@ -132,8 +133,8 @@ def recommend_study_rooms(request):
                 "booked_slots": booked_slots
             })
 
-        # 점수 기준 내림차순 정렬
-        recommendations.sort(key=lambda x: x["score"], reverse=True)
+        # 1차 정렬: 추천 여부 (is_available), 2차 정렬: 점수 (score)
+        recommendations.sort(key=lambda x: (x["is_available"], x["score"]), reverse=True)
 
         # 순위 부여
         for idx, rec in enumerate(recommendations):
@@ -226,6 +227,20 @@ def recommend_study_rooms(request):
                     for i, combo in enumerate(top_3_combos):
                         combo["combo_id"] = f"combo_{i+1}"
                         del combo["raw_score"]
+                        
+                        # 슬롯 병합 로직 (연속된 동일 방 병합)
+                        merged_slots = []
+                        if combo["slots"]:
+                            current_slot = combo["slots"][0].copy()
+                            for slot in combo["slots"][1:]:
+                                if slot["room_id"] == current_slot["room_id"]:
+                                    current_slot["end_time"] = slot["end_time"]
+                                    current_slot["end_hour"] = slot["end_hour"]
+                                else:
+                                    merged_slots.append(current_slot)
+                                    current_slot = slot.copy()
+                            merged_slots.append(current_slot)
+                        combo["slots"] = merged_slots
                         
                     return JsonResponse({
                         "status": "success",
@@ -388,6 +403,7 @@ def create_combo_reservation(request):
 
         with transaction.atomic():
             new_reservations = []
+            group_id = uuid.uuid4().hex
             for slot in slots:
                 room_id = slot.get("room_id")
                 start_time_str = slot.get("start_time")
@@ -413,6 +429,7 @@ def create_combo_reservation(request):
                     room_id=room_id,
                     start_time=start_time,
                     end_time=end_time,
+                    reservation_group_id=group_id,
                     head_count=head_count,
                     status="CONFIRMED"
                 )
@@ -474,6 +491,7 @@ def get_my_reservations(request):
                 "date": date_str,
                 "startHour": start.hour,
                 "endHour": end.hour if end.hour != 0 else 24,
+                "reservationGroupId": res.reservation_group_id,
             })
             
         return JsonResponse({
