@@ -110,7 +110,7 @@ def recommend_study_rooms(request):
             room_facilities = set(facilities_list)
             
             matched = list(requested_facilities.intersection(room_facilities))
-            facility_score = len(matched) * 25 
+            facility_score = len(matched) * 30 
             
             # 수용 인원 낭비 최소화 점수
             wasted_space = room.capacity - head_count
@@ -168,7 +168,7 @@ def recommend_study_rooms(request):
                         if is_avail:
                             facilities_list = [f.strip() for f in room.facilities.split(',')] if room.facilities else []
                             matched = list(requested_facilities.intersection(set(facilities_list)))
-                            facility_score = len(matched) * 25 
+                            facility_score = len(matched) * 30 
                             wasted_space = room.capacity - head_count
                             capacity_score = max(100 - (wasted_space * 10), 0)
                             score = capacity_score + facility_score
