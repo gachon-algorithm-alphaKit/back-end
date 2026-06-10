@@ -48,7 +48,7 @@ def evaluate_scholarship_match(student, scholarship):
 
     income_pass = True
     if scholarship.required_income_bracket is not None:
-        income_pass = student['income_bracket'] >= scholarship.required_income_bracket
+        income_pass = student['income_bracket'] <= scholarship.required_income_bracket
 
     is_fully_matched = gpa_pass and income_pass
 

@@ -266,6 +266,7 @@ def format_item_dict(item, current_student_id=None, match_score=None):
         "title": item.title,
         "is_anonymous": item.is_anonymous,
         "category": item.category,
+        "place": item.place or "",
         "description": item.description,
         "status": item.status,
         "lost_item_img": img_url,
@@ -295,6 +296,7 @@ def handle_lost_items(request):
             is_anonymous_str = request.POST.get("is_anonymous", "false").lower()
             is_anonymous = is_anonymous_str == "true"
             category = request.POST.get("category", "")
+            place = request.POST.get("place", "")
             description = request.POST.get("description", "").strip()
             
             image_file = request.FILES.get("lost_item_img")
@@ -307,7 +309,7 @@ def handle_lost_items(request):
             
             new_item = LostItemPost.objects.create(
                 school=school,
-                place=place_id,
+                place=place,
                 student_id=student_id,
                 title=title,
                 is_anonymous=is_anonymous,
@@ -403,6 +405,7 @@ def update_lost_item(request, item_id):
             title = data.get('title', '').strip()
             description = data.get('description', '').strip()
             category = data.get('category', item.category)
+            place = data.get('place', item.place)
             is_anonymous = data.get('is_anonymous', item.is_anonymous)
             status = data.get('status', item.status)
             
@@ -413,6 +416,7 @@ def update_lost_item(request, item_id):
             item.title = title
             item.description = description
             item.category = category
+            item.place = place
             item.is_anonymous = is_anonymous
             item.status = status
             
