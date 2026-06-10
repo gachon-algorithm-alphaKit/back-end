@@ -69,7 +69,23 @@ python manage.py migrate
 python populate_campus.py
 ```
 
-### 5. 개발 서버 실행
+### 5. (선택) 더미 데이터 생성
+
+테스트용 스터디룸 공실 데이터 및 밸런스 게임 투표/댓글 데이터를 생성하려면 아래 스크립트를 실행하세요.
+
+```bash
+# 스터디룸 오늘자 더미 데이터 생성
+python generate_studyroom_dummy.py
+```
+> 💡 **스터디룸 공실 조합 테스트 팁**  
+> `generate_studyroom_dummy.py`는 데이터베이스의 **모든 스터디룸**을 대상으로 10시~14시 사이 특정 시간대에 무작위 부분 예약(예: 10~11시, 12~14시 등)을 강제로 채워 넣습니다. 어느 방도 4시간 연속으로 온전히 비어있지 않도록 조작함으로써, 예약 검색 시 단일 방 추천 대신 **"여러 방을 시간 단위로 옮겨 쓰는 공실 조합 추천"** 기능이 정상적으로 트리거되도록 돕는 테스트 목적 스크립트입니다.
+
+```bash
+# 밸런스 게임 오늘자 300명 투표/댓글 더미 데이터 생성
+python generate_balancegame_dummy.py
+```
+
+### 6. 개발 서버 실행
 
 ```bash
 python manage.py runserver
@@ -77,13 +93,13 @@ python manage.py runserver
 python manage.py runserver 0.0.0.0:8000
 ```
 
-### 6. 관리자 페이지 접근
+### 7. 관리자 페이지 접근
 
 ```
 http://localhost:8000/admin/
 ```
 
-### 7. 테스트 실행
+### 8. 테스트 실행
 
 ```bash
 python manage.py test core
@@ -289,6 +305,10 @@ back-end/
 | **ScholarshipHistory** | 장학금 수혜 이력 | `student`, `scholarship`, `semester` |
 | **LostItemPost** | 분실물 게시글 | `title`, `category`, `description`, `lost_item_img`, `status`, `is_anonymous` |
 | **Comment** | 분실물 댓글 | `lost_item`, `student`, `comment`, `is_anonymous` |
+| **Topic** | 밸런스 게임 주제 | `title`, `opinion_1`, `opinion_2`, `publish_date`, `is_active`, `total_vote_count` |
+| **TopicVote** | 밸런스 게임 투표 | `topic`, `student`, `select_opinion` |
+| **TopicComment** | 밸런스 게임 댓글 | `topic`, `student`, `comment`, `select_opinion`, `like_count` |
+| **TopicCommentLike** | 밸런스 게임 댓글 좋아요 | `comment`, `student` |
 
 ---
 
@@ -507,6 +527,20 @@ back-end/
 |--------|----------|------|------|
 | `GET` | `/api/lost-items/<item_id>/comments/` | 댓글 목록 조회 | 🔒 |
 | `POST` | `/api/lost-items/<item_id>/comments/` | 댓글 작성 | 🔒 |
+
+---
+
+### ⚖️ 밸런스 게임 (Balance Game)
+
+| Method | Endpoint | 설명 | 인증 |
+|--------|----------|------|------|
+| `GET` | `/api/topics/active/` | 현재 활성화된(오늘의) 주제 조회 | ❌ |
+| `GET` | `/api/topics/` | 지난 주제 목록 조회 (커서 기반 페이지네이션) | 🔒 |
+| `POST` | `/api/topics/<topic_id>/vote/` | 투표하기 및 의견 변경 | 🔒 |
+| `GET` | `/api/topics/<topic_id>/vote/stat/` | 투표 통계(A/B 비율 등) 조회 | 🔒 |
+| `GET` | `/api/topics/<topic_id>/comments/list/` | 토픽의 특정 의견(A/B) 댓글 목록 조회 | 🔒 |
+| `POST` | `/api/topics/<topic_id>/comments/` | 토픽 댓글 작성 | 🔒 |
+| `POST` | `/api/topics/comments/<comment_id>/like/` | 댓글 좋아요 토글 | 🔒 |
 
 ---
 
