@@ -3,3 +3,14 @@ logs/
 log/
 !log/error/error.log
 !ui_error.log
+*.pot
+*.py[cod]
+__pycache__/
+local_settings.py
+media/
+venv/
+env/
+.env
+.idea/
+.vscode/
+.DS_Store
