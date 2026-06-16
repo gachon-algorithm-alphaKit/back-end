@@ -1,0 +1,13 @@
+{"timestamp": "2026-06-04 11:06:57,658", "level": "WARNING", "logger_name": "core.api", "message": "API Client Error Response: 404", "request_id": "c6962302-8523-4ed6-b0b4-a4d31757f124", "user_id": 1, "api_id": "unknown", "duration_ms": 11.01, "correlation_id": "c6962302-8523-4ed6-b0b4-a4d31757f124"}
+{"timestamp": "2026-06-04 11:06:57,668", "level": "WARNING", "logger_name": "django.request", "message": "Not Found: /"}
+{"timestamp": "2026-06-04 11:06:57,669", "level": "WARNING", "logger_name": "django.server", "message": "\"GET / HTTP/1.1\" 404 2473"}
+{"timestamp": "2026-06-04 11:06:57,843", "level": "WARNING", "logger_name": "core.api", "message": "API Client Error Response: 404", "request_id": "462101b2-08d7-42fa-8da4-2fec36405185", "user_id": 1, "api_id": "unknown", "duration_ms": 6.81, "correlation_id": "462101b2-08d7-42fa-8da4-2fec36405185"}
+{"timestamp": "2026-06-04 11:06:57,851", "level": "WARNING", "logger_name": "django.request", "message": "Not Found: /favicon.ico"}
+{"timestamp": "2026-06-04 11:06:57,852", "level": "WARNING", "logger_name": "django.server", "message": "\"GET /favicon.ico HTTP/1.1\" 404 2524"}
+{"timestamp": "2026-06-11 01:10:22,216", "level": "WARNING", "logger_name": "core.api", "message": "API Client Error Response: 401", "request_id": "d213d034-99e3-43f8-97ae-28c5d8d09d15", "user_id": null, "api_id": "auth-view", "duration_ms": 27.95, "correlation_id": "d213d034-99e3-43f8-97ae-28c5d8d09d15"}
+{"timestamp": "2026-06-11 01:10:22,226", "level": "WARNING", "logger_name": "django.request", "message": "Unauthorized: /api/students/info"}
+{"timestamp": "2026-06-11 01:10:22,228", "level": "WARNING", "logger_name": "django.server", "message": "\"GET /api/students/info HTTP/1.1\" 401 67"}
+{"timestamp": "2026-06-11 01:12:15,231", "level": "WARNING", "logger_name": "core.api.login", "message": "e-Campus login failed for username: byou0070 (Invalid credentials)"}
+{"timestamp": "2026-06-11 01:12:15,233", "level": "WARNING", "logger_name": "core.api", "message": "API Client Error Response: 401", "request_id": "c7c8c3ac-b5ca-4d81-8bd5-6a0f5c2002ff", "user_id": null, "api_id": "login-view", "duration_ms": 1005.67, "correlation_id": "c7c8c3ac-b5ca-4d81-8bd5-6a0f5c2002ff"}
+{"timestamp": "2026-06-11 01:12:15,233", "level": "WARNING", "logger_name": "django.request", "message": "Unauthorized: /api/students/login"}
+{"timestamp": "2026-06-11 01:12:15,233", "level": "WARNING", "logger_name": "django.server", "message": "\"POST /api/students/login HTTP/1.1\" 401 126"}
