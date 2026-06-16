@@ -11,3 +11,11 @@
 {"timestamp": "2026-06-11 01:12:15,233", "level": "WARNING", "logger_name": "core.api", "message": "API Client Error Response: 401", "request_id": "c7c8c3ac-b5ca-4d81-8bd5-6a0f5c2002ff", "user_id": null, "api_id": "login-view", "duration_ms": 1005.67, "correlation_id": "c7c8c3ac-b5ca-4d81-8bd5-6a0f5c2002ff"}
 {"timestamp": "2026-06-11 01:12:15,233", "level": "WARNING", "logger_name": "django.request", "message": "Unauthorized: /api/students/login"}
 {"timestamp": "2026-06-11 01:12:15,233", "level": "WARNING", "logger_name": "django.server", "message": "\"POST /api/students/login HTTP/1.1\" 401 126"}
+{"timestamp": "2026-06-16 13:04:07,572", "level": "ERROR", "logger_name": "core.api.auth", "message": "Error creating student record for noahjoo112: UNIQUE constraint failed: core_student.student_id"}
+{"timestamp": "2026-06-16 13:04:07,573", "level": "ERROR", "logger_name": "core.api", "message": "API Error Response: 500", "request_id": "9f7b7ffe-fe93-42b8-bd03-178551beed31", "user_id": null, "api_id": "auth-view", "duration_ms": 632.99, "correlation_id": "9f7b7ffe-fe93-42b8-bd03-178551beed31"}
+{"timestamp": "2026-06-16 13:04:07,574", "level": "ERROR", "logger_name": "django.request", "message": "Internal Server Error: /api/students/info"}
+{"timestamp": "2026-06-16 13:04:07,574", "level": "ERROR", "logger_name": "django.server", "message": "\"POST /api/students/info HTTP/1.1\" 500 119"}
+{"timestamp": "2026-06-16 13:04:14,946", "level": "ERROR", "logger_name": "core.api.auth", "message": "Error creating student record for noahjoo112: UNIQUE constraint failed: core_student.student_id"}
+{"timestamp": "2026-06-16 13:04:14,946", "level": "ERROR", "logger_name": "core.api", "message": "API Error Response: 500", "request_id": "2b688d33-75d0-4284-bb15-97052a242b44", "user_id": null, "api_id": "auth-view", "duration_ms": 532.76, "correlation_id": "2b688d33-75d0-4284-bb15-97052a242b44"}
+{"timestamp": "2026-06-16 13:04:14,947", "level": "ERROR", "logger_name": "django.request", "message": "Internal Server Error: /api/students/info"}
+{"timestamp": "2026-06-16 13:04:14,948", "level": "ERROR", "logger_name": "django.server", "message": "\"POST /api/students/info HTTP/1.1\" 500 119"}

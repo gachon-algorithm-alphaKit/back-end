@@ -3,7 +3,7 @@ from .api.login import student_login
 from .api.auth import student_info
 from .api.courses import get_courses
 from .api.wishlist import wishlist_toggle, wishlist_list, wishlist_remove
-from .api.campus import get_campus_graph
+from .api.campus import get_campus_graph, get_naver_static_map
 from .api.scholarships import get_scholarships
 from .api.rooms import recommend_study_rooms, create_reservation, create_combo_reservation, get_my_reservations, cancel_reservation
 from .api.losts import search_lost_items, handle_lost_items, get_my_lost_items, update_lost_item, suggest_lost_items, claim_lost_item
@@ -22,6 +22,7 @@ urlpatterns = [
     path('wishlist/toggle/', wishlist_toggle, name='wishlist_toggle'),
     path('wishlist/remove/<int:course_id>/', wishlist_remove, name='wishlist_remove'),
     path('campus/graph/', get_campus_graph, name='campus_graph'),
+    path('campus/map/', get_naver_static_map, name='campus_map'),
     path('scholarships/', get_scholarships, name='get_scholarships'),
     path('rooms/recommend/', recommend_study_rooms, name='recommend_study_rooms'),
     path('rooms/reserve/', create_reservation, name='create_reservation'),
