@@ -209,3 +209,6 @@ LOGGING = {
         },
     },
 }
+
+# Flutter Web Build Directory (Relative path from BASE_DIR)
+FLUTTER_WEB_DIR = BASE_DIR.parent / 'front' / 'front-end' / 'build' / 'web'
