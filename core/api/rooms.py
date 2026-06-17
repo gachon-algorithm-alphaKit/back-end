@@ -8,6 +8,140 @@ from django.db import transaction
 from django.db.models import Q
 from core.models.rooms import StudyRoom, Reservation
 import random
+import ctypes
+
+# 실행 환경: Python 3.x , Django
+# 필요 라이브러리: json, uuid, datetime, random, ctypes, django, djangorestframework-simplejwt
+# Input 데이터 출처: Gemini 생성 (추후 학교별 API 로 대체 가능)
+
+# 자료구조: 메모리의 연속된 배열(Contiguous Array, 파이썬의 list)
+class ContiguousArray:
+    """ctypes를 이용해 메모리 상에 연속적으로 할당되는 배열 구조"""
+    def __init__(self, size):
+        self.size = size
+        self._array = (ctypes.py_object * size)()
+        
+    def __getitem__(self, index):
+        if index < 0 or index >= self.size:
+            raise IndexError("Array index out of range")
+        return self._array[index]
+        
+    def __setitem__(self, index, value):
+        if index < 0 or index >= self.size:
+            raise IndexError("Array index out of range")
+        self._array[index] = value
+        
+    def __len__(self):
+        return self.size
+
+# 자료구조: 스택
+class CustomStack:
+    """백트래킹에 활용되는 스택 자료구조 직접 구현"""
+    def __init__(self):
+        self._items = []
+        
+    def push(self, item):
+        self._items.append(item)
+        
+    def pop(self):
+        if not self.is_empty():
+            return self._items.pop()
+        raise IndexError("pop from empty stack")
+        
+    def peek(self):
+        if not self.is_empty():
+            return self._items[-1]
+        return None
+        
+    def is_empty(self):
+        return len(self._items) == 0
+        
+    def to_list(self):
+        return list(self._items)
+
+MIN_MERGE = 32
+
+def calc_min_run(n):
+    r = 0
+    while n >= MIN_MERGE:
+        r |= n & 1
+        n >>= 1
+    return n + r
+
+def custom_insertion_sort(arr, left, right, key, reverse):
+    for i in range(left + 1, right + 1):
+        temp = arr[i]
+        j = i - 1
+        if reverse:
+            while j >= left and key(arr[j]) < key(temp):
+                arr[j + 1] = arr[j]
+                j -= 1
+        else:
+            while j >= left and key(arr[j]) > key(temp):
+                arr[j + 1] = arr[j]
+                j -= 1
+        arr[j + 1] = temp
+
+def custom_merge(arr, l, m, r, key, reverse):
+    len1, len2 = m - l + 1, r - m
+    left_arr = ContiguousArray(len1)
+    right_arr = ContiguousArray(len2)
+
+    for idx in range(len1):
+        left_arr[idx] = arr[l + idx]
+    for idx in range(len2):
+        right_arr[idx] = arr[m + 1 + idx]
+
+    i, j, k = 0, 0, l
+    if reverse:
+        while i < len1 and j < len2:
+            if key(left_arr[i]) >= key(right_arr[j]):
+                arr[k] = left_arr[i]
+                i += 1
+            else:
+                arr[k] = right_arr[j]
+                j += 1
+            k += 1
+    else:
+        while i < len1 and j < len2:
+            if key(left_arr[i]) <= key(right_arr[j]):
+                arr[k] = left_arr[i]
+                i += 1
+            else:
+                arr[k] = right_arr[j]
+                j += 1
+            k += 1
+
+    while i < len1:
+        arr[k] = left_arr[i]
+        k += 1
+        i += 1
+
+    while j < len2:
+        arr[k] = right_arr[j]
+        k += 1
+        j += 1
+
+def custom_timsort(arr, key=None, reverse=False):
+    if key is None:
+        key = lambda x: x
+    n = len(arr)
+    if n < 2:
+        return
+    min_run = calc_min_run(n)
+
+    for start in range(0, n, min_run):
+        end = min(start + min_run - 1, n - 1)
+        custom_insertion_sort(arr, start, end, key, reverse)
+
+    size = min_run
+    while size < n:
+        for left in range(0, n, 2 * size):
+            mid = min(n - 1, left + size - 1)
+            right = min(left + 2 * size - 1, n - 1)
+            if mid < right:
+                custom_merge(arr, left, mid, right, key, reverse)
+        size *= 2
 
 @csrf_exempt
 def recommend_study_rooms(request):
@@ -133,8 +267,8 @@ def recommend_study_rooms(request):
                 "booked_slots": booked_slots
             })
 
-        # 1차 정렬: 추천 여부 (is_available), 2차 정렬: 점수 (score)
-        recommendations.sort(key=lambda x: (x["is_available"], x["score"]), reverse=True)
+        # 추천 여부와 점수 기준 정렬: Timsort
+        custom_timsort(recommendations, key=lambda x: (x["is_available"], x["score"]), reverse=True)
 
         # 순위 부여
         for idx, rec in enumerate(recommendations):
@@ -192,7 +326,7 @@ def recommend_study_rooms(request):
                     valid_for_h.sort(key=lambda x: x["score"], reverse=True)
                     slot_valid_rooms.append(valid_for_h[:5])
                     
-                # 2. 백트래킹(DFS)으로 최적의 조합 찾기
+                # 2. 최적의 공실 조합 추천: 백트래킹(DFS)
                 best_combos = []
                 
                 def backtrack(hour_idx, current_combo, current_raw_score, room_changes):
@@ -201,7 +335,7 @@ def recommend_study_rooms(request):
                         penalty = room_changes * 50
                         final_score = current_raw_score - penalty
                         best_combos.append({
-                            "slots": list(current_combo),
+                            "slots": current_combo.to_list(),
                             "total_score": final_score / duration_hours,
                             "raw_score": final_score
                         })
@@ -209,16 +343,16 @@ def recommend_study_rooms(request):
                         
                     for room_data in slot_valid_rooms[hour_idx]:
                         is_change = 0
-                        if current_combo and current_combo[-1]["room_id"] != room_data["room_id"]:
+                        if not current_combo.is_empty() and current_combo.peek()["room_id"] != room_data["room_id"]:
                             is_change = 1
                             
-                        current_combo.append(room_data)
+                        current_combo.push(room_data)
                         backtrack(hour_idx + 1, current_combo, current_raw_score + room_data["score"], room_changes + is_change)
                         current_combo.pop()
                         
                 # 모든 시간대에 최소 1개 이상의 사용 가능한 방이 있어야 조합 가능
                 if all(len(rooms) > 0 for rooms in slot_valid_rooms):
-                    backtrack(0, [], 0, 0)
+                    backtrack(0, CustomStack(), 0, 0)
                     
                     # 최종 점수(패널티 적용) 기준으로 내림차순 정렬 후 상위 3개 추출
                     best_combos.sort(key=lambda x: x["raw_score"], reverse=True)
