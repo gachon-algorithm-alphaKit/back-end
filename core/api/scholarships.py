@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# 실행 환경: Python 3.x, Django
+# 필요 라이브러리: django, json, datetime
+# Input 데이터 출처: 가천대학교 장학 제도 공지 및 한국장학재단 공개 정보.
 import json
 from datetime import datetime
 from django.http import JsonResponse
@@ -138,7 +141,7 @@ def get_scholarships(request):
             })
 
         # 매칭 점수가 높은 순(내림차순), 금액이 높은 순(내림차순)으로 2차 정렬
-        # [팀소트 알고리즘 (Timsort) & Tuple 자료구조 사용] 
+        # [Tuple 자료구조 사용] 
         # - Tuple 역할: 파이썬의 튜플 사전식 비교(Lexicographical Comparison)를 활용하여 복합 키 생성
         # - Tuple 이유: 다중 조건 정렬을 간결하게 구현하고, 불변형(Immutable) 덕분에 정렬 처리가 효율적임
         response_data.sort(key=lambda x: (x['recommendation_info']['match_score'], x['minimum_amount']), reverse=True)
