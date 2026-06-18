@@ -308,6 +308,11 @@ def format_item_dict(item, current_student_id=None, match_score=None):
             else:
                 author_profile_img = item.student.profile_img.url
 
+    # 자료구조: 해시 테이블 기반의 Dictionary(사전)
+    # 프로세싱 과정:
+    # 1. DB에서 조회한 ORM 객체(item)의 데이터를 API 응답 규격에 맞게 Key-Value 쌍으로 구조화합니다.
+    # 2. 파이썬의 Dictionary는 해시 테이블을 사용하여 O(1) 시간 복잡도로 데이터 삽입 및 조회가 가능합니다.
+    # 3. 구성된 Dictionary는 이후 JsonResponse에 전달되어 클라이언트용 JSON 문자열로 직렬화(Serialization)됩니다.
     data = {
         "item_id": item.item_id,
         "school_id": item.school_id_id if hasattr(item, 'school_id_id') else item.school_id,
