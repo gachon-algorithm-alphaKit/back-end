@@ -111,6 +111,10 @@ def get_scholarships(request):
 
         # 6. 학생 데이터 기반 매칭 연산 및 직렬화
         response_data = []
+        
+        # [선형 탐색 및 순회 (Linear Search / Traversal)]
+        # - 역할: 한 페이지 분량의 배열(page_obj) 요소를 처음부터 끝까지 순차적으로 하나씩 접근
+        # - 특징: 페이징된 결과 개수(N)만큼 비례하여 실행되므로 O(N)의 시간 복잡도 발생
         for doc in page_obj:
             # 매칭 알고리즘 실행
             match_score, is_fully_matched = evaluate_scholarship_match(current_student, doc)
@@ -134,6 +138,9 @@ def get_scholarships(request):
             })
 
         # 매칭 점수가 높은 순(내림차순), 금액이 높은 순(내림차순)으로 2차 정렬
+        # [팀소트 알고리즘 (Timsort) & Tuple 자료구조 사용] 
+        # - Tuple 역할: 파이썬의 튜플 사전식 비교(Lexicographical Comparison)를 활용하여 복합 키 생성
+        # - Tuple 이유: 다중 조건 정렬을 간결하게 구현하고, 불변형(Immutable) 덕분에 정렬 처리가 효율적임
         response_data.sort(key=lambda x: (x['recommendation_info']['match_score'], x['minimum_amount']), reverse=True)
 
         # 7. 명세서 규격에 맞춘 성공 응답 반환
