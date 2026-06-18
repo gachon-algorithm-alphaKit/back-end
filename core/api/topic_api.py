@@ -5,6 +5,10 @@
 (기존 core/api/comments.py 패턴과 동일)
 """
 
+# 실행 환경: Python 3.x, Django
+# 필요 라이브러리: json, logging, JsonResponse, csrf_exempt, transaction, Count, Q, F, timezone, AccessToken, TokenError, InvalidToken
+# Input 데이터 출처: generate_balancegame_dummy.py 내 랜덤 생성
+
 import json
 import logging
 from django.http import JsonResponse
@@ -36,9 +40,13 @@ def get_student_id_from_token(request):
         return None
 
 
-# ── Anonymous numbering helper ───────────────────────────────
+# ── Anonymous numbering helper (익명 번호 부여: 등장 순서 기반 매핑) ──
+# [위치] 서버 `topic_api.py` -> `build_anon_map()`, 클라이언트 `topic_model.dart` -> `TopicComment.writer`
+# [역할] 동일 토픽 내 최초 댓글 작성 시각(created_at) 오름차순 기준으로 작성자에게 번호 부여(학생1, 학생2 등).
+#        서버에서 `{student_id: 번호}` 딕셔너리를 만들어 각 댓글 응답의 `writer` 문자열로 변환해 전달함.
+# [선택 이유] 완전 익명은 대화 맥락 파악을 어렵게 하므로, 토픽 내 유효한 익명 번호를 통해 개인정보를 보호하고
+#             같은 작성자의 댓글을 연결하여 읽을 수 있도록 해 토론 품질을 높임.
 def build_anon_map(topic_id):
-    """토픽 내 댓글 작성자에게 등장 순서대로 번호를 부여"""
     student_ids = TopicComment.objects.filter(
         topic_id=topic_id
     ).order_by('created_at').values_list('student_id', flat=True)
