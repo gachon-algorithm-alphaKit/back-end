@@ -14,7 +14,7 @@ import ctypes
 # 필요 라이브러리: json, uuid, datetime, random, ctypes, django, djangorestframework-simplejwt
 # Input 데이터 출처: Gemini 생성 (추후 학교별 API 로 대체 가능)
 
-# 자료구조: 메모리의 연속된 배열(Contiguous Array, 파이썬의 list)
+# 자료구조: 메모리의 연속된 배열(Timsort 알고리즘 구현용)
 class ContiguousArray:
     """ctypes를 이용해 메모리 상에 연속적으로 할당되는 배열 구조"""
     def __init__(self, size):
@@ -34,7 +34,7 @@ class ContiguousArray:
     def __len__(self):
         return self.size
 
-# 자료구조: 스택
+# 자료구조: 스택 (백트래킹 알고리즘 구현용)
 class CustomStack:
     """백트래킹에 활용되는 스택 자료구조 직접 구현"""
     def __init__(self):
@@ -58,6 +58,20 @@ class CustomStack:
         
     def to_list(self):
         return list(self._items)
+
+# 자료구조: 비트셋 (내부 연산 최적화용)
+class CustomBitset:
+    """14시간 슬롯의 상태를 비트 연산으로 관리하는 구조체 (08:00 ~ 22:00)"""
+    def __init__(self, size=14):
+        self.size = size
+        self.bits = 0
+        
+    def set_bit(self, index):
+        if 0 <= index < self.size:
+            self.bits |= (1 << index)
+            
+    def to_boolean_list(self):
+        return [(self.bits & (1 << i)) != 0 for i in range(self.size)]
 
 MIN_MERGE = 32
 
@@ -206,7 +220,7 @@ def recommend_study_rooms(request):
             
             # Timeline slot logic (08:00 ~ 22:00)
             if res.room_id not in room_bookings:
-                room_bookings[res.room_id] = [False] * 14
+                room_bookings[res.room_id] = CustomBitset(14)
                 
             res_start_hour = res.start_time.astimezone(current_tz).hour
             res_end_hour = res.end_time.astimezone(current_tz).hour
@@ -220,7 +234,7 @@ def recommend_study_rooms(request):
             
             for h in range(res_start_hour, res_end_hour):
                 if 8 <= h < 22:
-                    room_bookings[res.room_id][h - 8] = True
+                    room_bookings[res.room_id].set_bit(h - 8)
 
         # 2. 방 필터링 (학교 일치, 수용인원 충족) - 겹치는 예약 제외하지 않음 (UI 비활성화 목적)
         all_rooms = StudyRoom.objects.select_related('place').filter(
@@ -238,7 +252,8 @@ def recommend_study_rooms(request):
             room_is_booked = room.room_id in overlapping_room_ids
             is_available = (not room_is_booked) and (not user_has_overlap)
             is_my_reservation = room.room_id in my_overlapping_room_ids
-            booked_slots = room_bookings.get(room.room_id, [False] * 14)
+            bitset_obj = room_bookings.get(room.room_id)
+            booked_slots = bitset_obj.to_boolean_list() if bitset_obj else [False] * 14
             # 시설 문자열을 리스트로 파싱 (예: "TV,화이트보드" -> ["TV", "화이트보드"])
             facilities_list = [f.strip() for f in room.facilities.split(',')] if room.facilities else []
             room_facilities = set(facilities_list)
