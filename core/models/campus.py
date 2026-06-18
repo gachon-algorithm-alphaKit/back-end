@@ -1,6 +1,18 @@
+# 실행 환경: Python 3.x, Django
+# 목적: 가천대학교 캠퍼스 지리 정보 및 길찾기(A*) 알고리즘을 위한 데이터 모델 정의
+# 주요 모델:
+#   - School: 학교/캠퍼스 구분 정보
+#   - Place: 위경도 좌표를 갖는 주요 장소 및 경로 탐색을 위한 노드(Vertex)
+#   - CampusEdge: 노드 간 물리적 연결 관계 및 보행 가능 여부를 나타내는 간선(Edge)
+#   - PlaceAlias: 장소 검색의 유연성을 높이기 위한 사용자 친화적 약칭/동의어 매핑
+
 from django.db import models
 
 class School(models.Model):
+    """
+    [Model] 대학교/캠퍼스 기본 정보
+    여러 캠퍼스(예: 글로벌 캠퍼스, 메디컬 캠퍼스)를 통합 관리할 경우 데이터를 논리적으로 분리하는 최상위 식별자 역할을 합니다.
+    """
     school_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, null=True, blank=True)
 
