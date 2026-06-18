@@ -1,13 +1,20 @@
 import json
+import math
+
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
-from core.models.community import LostItemPost
-from core.models.campus import School
 from django.utils import timezone
-import math
+
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
+
+from core.models.community import LostItemPost
+from core.models.campus import School
+
+# 실행 환경: Python 3.x , Django
+# 필요 라이브러리: json, JsonResponse, csrf_exempt, Q, timezone, math, TokenError, InvalidToken, AccessToken
+# Input 데이터 출처: Gemini 생성 (추후 학교별 API 로 대체 가능)
 
 def get_student_id_from_token(request):
     auth_header = request.headers.get('Authorization', '')
@@ -19,43 +26,101 @@ def get_student_id_from_token(request):
     except (TokenError, InvalidToken, ValueError, TypeError):
         return None
 
-# 1. KMP 알고리즘 (O(N+M) 완전 일치 탐색) - 대소문자 무시를 위해 외부에서 lower() 적용
+# 자료구조: 1차원 배열(List) (KMP 알고리즘의 LPS 배열 구현용)
+# 프로세싱 과정:
+# 1. 검색어(pattern)를 분석하여 접두사와 접미사가 일치하는 최대 길이를 기록한 LPS 배열을 생성합니다.
+# 2. 본문 텍스트를 순회하며 패턴과 한 글자씩 비교합니다.
+# 3. 불일치가 발생하면 되돌아가지 않고, LPS 배열을 참고하여 건너뜀으로써 탐색 속도를 최적화합니다.
+# 4. 대소문자 무시를 위해 외부에서 lower() 적용
 def compute_lps(pattern):
     lps = [0] * len(pattern)
-    length = 0
+    length = 0  # 이전 접두사/접미사 일치 길이
     i = 1
+    
+    # 1. 패턴 전체를 순회하며 LPS 배열을 채웁니다.
     while i < len(pattern):
+        # 1-1. 현재 문자와 이전 접두사 문자가 일치하는 경우
         if pattern[i] == pattern[length]:
             length += 1
             lps[i] = length
             i += 1
+        # 1-2. 일치하지 않는 경우
         else:
             if length != 0:
+                # 바로 이전의 일치했던 위치로 돌아가서 다시 비교합니다.
                 length = lps[length - 1]
             else:
+                # 일치하는 접두사가 없으면 0으로 기록하고 다음 문자로 넘어갑니다.
                 lps[i] = 0
                 i += 1
     return lps
 
 def kmp_search(text, pattern):
     if not pattern: return False
+    
+    # 1. 검색어에 대한 LPS 배열을 먼저 계산합니다.
     lps = compute_lps(pattern)
-    i = 0  
-    j = 0  
+    i = 0  # 본문(text) 인덱스
+    j = 0  # 패턴(pattern) 인덱스
+    
+    # 2. 본문 텍스트를 순회하며 탐색을 시작합니다.
     while i < len(text):
+        # 2-1. 문자가 일치하면 두 인덱스를 모두 증가시킵니다.
         if pattern[j] == text[i]:
             i += 1
             j += 1
+            
+        # 2-2. 패턴의 끝까지 모두 일치했다면 검색 성공입니다.
         if j == len(pattern):
             return True
+            
+        # 2-3. 일치하지 않는 문자가 발생했을 때
         elif i < len(text) and pattern[j] != text[i]:
             if j != 0:
+                # LPS 배열을 참고하여 불필요한 비교를 건너뜁니다 (이 점이 KMP의 핵심 최적화입니다).
                 j = lps[j - 1]
             else:
+                # 패턴의 첫 글자부터 틀렸다면 본문 인덱스만 1 증가시킵니다.
                 i += 1
     return False
 
-# 2. 한글 자모 분리 기반 Levenshtein Distance (오타 및 유사도 탐색)
+# 자료구조: 1차원 배열(List) (Levenshtein 알고리즘의 DP 테이블 공간 최적화용)
+# 프로세싱 과정:
+# 1. 전체 2차원 DP 행렬을 만드는 대신, 이전 행(previous_row)과 현재 행(current_row) 단 2개의 1차원 배열만 사용해 메모리를 절약합니다.
+# 2. 두 문자열의 글자들을 순회하며 삽입, 삭제, 대체 중 가장 적은 비용이 드는 연산 횟수를 현재 행에 누적 기록합니다.
+# 3. 최종적으로 행의 마지막 인덱스 값을 반환하여 두 문자열이 얼마나 다른지(거리)를 측정합니다.
+def levenshtein(s1, s2):
+    # 항상 긴 문자열을 s1으로 두어 메모리 사용량(s2의 길이)을 최소화합니다.
+    if len(s1) < len(s2):
+        return levenshtein(s2, s1)
+    if len(s2) == 0:
+        return len(s1)
+        
+    # 1. 첫 번째 행을 초기화합니다. (0부터 s2의 길이까지)
+    previous_row = range(len(s2) + 1)
+    
+    # 2. 긴 문자열(s1)의 문자들을 차례대로 순회합니다.
+    for i, c1 in enumerate(s1):
+        # 현재 행의 첫 번째 값은 항상 삭제 연산의 누적값(i+1)입니다.
+        current_row = [i + 1]
+        
+        # 3. 짧은 문자열(s2)의 문자들과 하나씩 비교합니다.
+        for j, c2 in enumerate(s2):
+            # 삽입, 삭제, 변경 중 가장 적은 비용이 드는 연산을 선택합니다.
+            insertions = previous_row[j + 1] + 1
+            deletions = current_row[j] + 1
+            substitutions = previous_row[j] + (c1 != c2)
+            
+            # 4. 세 가지 경우 중 최솟값을 현재 행에 기록합니다.
+            current_row.append(min(insertions, deletions, substitutions))
+            
+        # 5. 다음 반복을 위해 현재 행을 이전 행으로 업데이트합니다.
+        previous_row = current_row
+        
+    # 최종적으로 배열의 마지막 원소가 두 문자열 사이의 거리(최소 연산 횟수)가 됩니다.
+    return previous_row[-1]
+
+#한글 자모 분리 기반 Levenshtein Distance (오타 및 유사도 탐색)
 def decompose_hangul(text):
     result = []
     for char in text:
@@ -69,22 +134,6 @@ def decompose_hangul(text):
         else:
             result.append(char)
     return "".join(result)
-
-def levenshtein(s1, s2):
-    if len(s1) < len(s2):
-        return levenshtein(s2, s1)
-    if len(s2) == 0:
-        return len(s1)
-    previous_row = range(len(s2) + 1)
-    for i, c1 in enumerate(s1):
-        current_row = [i + 1]
-        for j, c2 in enumerate(s2):
-            insertions = previous_row[j + 1] + 1
-            deletions = current_row[j] + 1
-            substitutions = previous_row[j] + (c1 != c2)
-            current_row.append(min(insertions, deletions, substitutions))
-        previous_row = current_row
-    return previous_row[-1]
 
 def get_fuzzy_match_score(text, keyword):
     """
